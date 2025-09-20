@@ -2,7 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import Profile
+from django.contrib.auth import authenticate
 
 # get_user_model() Returns the current active User model,
 #  which could be a custom one.
@@ -48,6 +50,24 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ("bio", "phone", "avatar")
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        user = authenticate(request=self.context.get("request"), email=email, password=password)
+
+        if not user:
+            raise serializers.ValidationError(_("Invalid email or password"))
+
+        data = super().validate({"username": user.email, "password": password})
+        return data
 
 
 class LogoutSerializer(serializers.Serializer):
