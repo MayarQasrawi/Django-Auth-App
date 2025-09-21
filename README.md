@@ -25,8 +25,8 @@ A simple Django authentication app using **Django REST Framework** and **JWT tok
 
 1. Clone the repository:
    ```bash
-   git clone <your-repo-url>
-   cd <repo-folder>
+   git clone https://github.com/MayarQasrawi/Django-Auth-App.git
+   cd MyProject
    ```
 
 2. Install dependencies:
