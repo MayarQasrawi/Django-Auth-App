@@ -10,6 +10,42 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer", # adds browsable API
+
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle"
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/day",
+        "user": "1000/day"
+    }
+}
+
+# JWT Configuration
+"""
+Django REST Framework configuration
+"""
+from datetime import timedelta
+from django.conf import settings
+
+APPEND_SLASH = False
+
+# REST Framework settings
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
@@ -39,7 +75,8 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
     
     "ALGORITHM": "HS256",
-    "SIGNING_KEY": None,  # Will use SECRET_KEY if None
+    # FIXED: Remove this line or set it explicitly to settings.SECRET_KEY
+    # "SIGNING_KEY": None,  # This was causing the error
     "VERIFYING_KEY": None,
     "AUDIENCE": None,
     "ISSUER": None,

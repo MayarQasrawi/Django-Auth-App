@@ -20,6 +20,7 @@ class RegisterView(generics.CreateAPIView):
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+    
 
 class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer

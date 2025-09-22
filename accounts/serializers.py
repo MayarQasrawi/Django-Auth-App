@@ -1,14 +1,12 @@
+# serializers.py
 from rest_framework import serializers
-from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Profile
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
 
-# get_user_model() Returns the current active User model,
-#  which could be a custom one.
-User = get_user_model()
+# Import your models directly instead of using get_user_model()
+from .models import User, Profile
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -28,13 +26,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop("password_confirm")
         
         user = User.objects.create_user(**validated_data) 
-        '''
-        1. create_user() automatically hashes the password before saving it to the database.
-        2. create_user() can set default fields properly (like is_staff=False, is_superuser=False for a regular user).
-        
-        note: For creating a superuser, Django provides create_superuser().
-        '''
-       
         Profile.objects.create(user=user)  # Create profile automatically
         return user
 
@@ -53,20 +44,23 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(write_only=True, required=True)
-
     def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-
-        user = authenticate(request=self.context.get("request"), email=email, password=password)
-
-        if not user:
-            raise serializers.ValidationError(_("Invalid email or password"))
-
-        data = super().validate({"username": user.email, "password": password})
+        print("attrs:", attrs)
+        data = super().validate(attrs)
+        print("self.user:", getattr(self, 'user', None))
+        
+        # Add custom claims if needed
+        refresh = self.get_token(self.user)
+        data['refresh'] = str(refresh)
+        data['access'] = str(refresh.access_token)
+        
+        # Add user info
+        data['user'] = {
+            'id': self.user.id,
+            'username': self.user.username,
+            'email': self.user.email,
+        }
+        
         return data
 
 
@@ -78,11 +72,8 @@ class LogoutSerializer(serializers.Serializer):
         return attrs
 
     def save(self, **kwargs):
-        from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-
         try:
             RefreshToken(self.token).blacklist()
         except TokenError:
-            self.fail("bad_token")
-
-
+            # Directly raise ValidationError instead of using self.fail()
+            raise serializers.ValidationError("Token is invalid or expired")
